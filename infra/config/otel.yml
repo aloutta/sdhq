@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317  # Receive Traces via gRPC
+      http:
+        endpoint: localhost:4318  # Receive Metrics via HTTP
+
+# Use the in-built `batch` processor to batch up data before writing it for export.
+processors:
+  batch:
+
+exporters:
+  otlp/trace:
+    endpoint: tempo:4317  # Export Traces to Tempo
+    tls:
+      insecure: true
+  otlp/metric:
+    endpoint: mimir:9009  # Export Metrics to Mimir
+    tls:
+      insecure: true
+
+# Define the full service graph for the OpenTelemetry collector.
+service:
+  pipelines:
+    traces:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ otlp/trace ]
+    metrics:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ otlp/metric ]

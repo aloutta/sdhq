@@ -1,0 +1,55 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector:0.119.0
+    container_name: otel-collector
+    ports:
+      - "4317:4317" # OpenTelemetry gRPC
+      - "4318:4318" # OpenTelemetry HTTP
+    volumes:
+      - ./config/otel.yml:/etc/otel/config.yaml
+    command: --config /etc/otel/config.yaml
+  loki: # logging storage
+    image: grafana/loki:3.3.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./config/loki.yml:/etc/loki/loki.yaml
+    command: ["--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml"]
+  mimir: # metrics storage
+    image: grafana/mimir:2.15.0
+    container_name: mimir
+    command: ["-ingester.native-histograms-ingestion-enabled=true", "-config.file=/etc/mimir.yaml"]
+    ports:
+      - "9009:9009"
+    volumes:
+      - mimir-data:/data
+      - ./config/mimir.yml:/etc/mimir.yaml
+  tempo: # tracing storage
+    image: grafana/tempo:2.7.0
+    container_name: tempo
+    ports:
+      - "3200:3200"
+    volumes:
+      - tempo-data:/var/lib/tempo
+      - ./config/tempo.yml:/etc/tempo/local-config.yaml
+    command: -config.file=/etc/tempo/local-config.yaml
+  grafana: # visualization for metrics, logs and traces
+    image: grafana/grafana:11.5.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+      - tempo
+volumes:
+  loki-data:
+  mimir-data:
+  tempo-data:
+  grafana-data:

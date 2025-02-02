@@ -1,0 +1,38 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  metrics:
+    tags:
+      application: backend-service
+    export:
+      otlp:
+        enabled: true
+        endpoint: http://localhost:4318
+        resource-attributes: service.name=backend-service
+  tracing:
+    enabled: true
+otel:
+  traces:
+    exporter: otlp
+  exporter:
+    otlp:
+      endpoint: http://localhost:4317
+  resource:
+    attributes: service.name=backend-service
+  instrumentation:
+    logback-mdc:
+      enabled: true
+spring:
+  application.name: backend-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/test
+    username: test
+    password: test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jooq:
+    sql-dialect: MYSQL
+loki:
+  url: http://localhost:3100/loki/api/v1/push
+  level: INFO
